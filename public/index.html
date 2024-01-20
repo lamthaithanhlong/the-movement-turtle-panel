@@ -3,24 +3,86 @@
 <head>
     <title>Robot Controller</title>
     <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .screen {
+            width: 300px;
+            height: 150px;
+            background-color: #ddd;
+            border: 1px solid #ccc;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        .controls {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: column;
+            height: 300px;
+        }
         button {
             width: 100px;
             height: 50px;
             margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+        button#stop {
+            background-color: red;
+            border-radius: 50%;
+        }
+        button:not(#stop):active {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transform: translateY(2px);
+        }
+        #status {
+            margin-top: 20px;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <h1>Robot Control Panel</h1>
-    <button id="forward">Move Forward</button>
-    <button id="backward">Move Backward</button>
-    <button id="left">Turn Left</button>
-    <button id="right">Turn Right</button>
-    <button id="stop">Stop</button>
-    <p id="status"></p>
+    <div class="container">
+        <div class="screen"></div>
+        <div class="controls">
+            <button id="forward">Forward</button>
+            <div style="display: flex; align-items: center;">
+                <button id="left">Left</button>
+                <button id="stop">Stop</button>
+                <button id="right">Right</button>
+            </div>
+            <button id="backward">Backward</button>
+        </div>
+        <p id="status">Ready</p>
+    </div>
 
     <script>
         var buttons = document.querySelectorAll('button');
+        var statusElement = document.getElementById('status');
         function setButtonsDisabled(disabled) {
             buttons.forEach(function(button) {
                 button.disabled = disabled;
@@ -29,21 +91,31 @@
 
         function sendCommand(action) {
             setButtonsDisabled(true);
-            document.getElementById('status').innerText = 'Executing: ' + action;
+            statusElement.innerText = 'Executing: ' + action;
 
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "http://167.88.168.20:5000/move_robot", true);
             xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.timeout = 2000;
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        statusElement.innerText = 'Action completed successfully';
+                    } else {
+                        statusElement.innerText = 'Error: Unable to connect to API';
+                    }
                     setButtonsDisabled(false);
-                    document.getElementById('status').innerText = 'Ready';
                 }
             };
-            xhr.send(JSON.stringify({
-                action: action,
-                duration: 3 // You can modify this duration as needed
-            }));
+            xhr.ontimeout = function () {
+                statusElement.innerText = 'Error: Request timed out';
+                setButtonsDisabled(false);
+            };
+            xhr.onerror = function () {
+                statusElement.innerText = 'Error: Network error';
+                setButtonsDisabled(false);
+            };
+            xhr.send(JSON.stringify({ action: action, duration: 3 }));
         }
 
         document.getElementById('forward').addEventListener('click', function() { sendCommand('forward'); });
@@ -51,6 +123,27 @@
         document.getElementById('left').addEventListener('click', function() { sendCommand('left'); });
         document.getElementById('right').addEventListener('click', function() { sendCommand('right'); });
         document.getElementById('stop').addEventListener('click', function() { sendCommand('stop'); });
+
+       // Keyboard event listener
+        document.addEventListener('keydown', function(event) {
+            switch (event.key) {
+                case 'ArrowUp':
+                    sendCommand('forward');
+                    break;
+                case 'ArrowDown':
+                    sendCommand('backward');
+                    break;
+                case 'ArrowLeft':
+                    sendCommand('left');
+                    break;
+                case 'ArrowRight':
+                    sendCommand('right');
+                    break;
+                case ' ':
+                    sendCommand('stop'); // Spacebar for stop
+                    break;
+            }
+        });
     </script>
 </body>
 </html>
