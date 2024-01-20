@@ -74,7 +74,14 @@
 <body>
     <div class="container">
         <h1>Robot Control Panel</h1>
-        <input type="text" id="rosEndpointInput" placeholder="Enter ROS Endpoint URL">
+        <div class="input-group">
+            <label for="rosEndpointInput">ROS Endpoint:</label>
+            <input type="text" id="rosEndpointInput" placeholder="Enter ROS Endpoint URL">
+        </div>
+        <div class="input-group">
+            <label for="durationRange">Duration: <span id="durationValue">3</span> seconds</label>
+            <input type="range" id="durationRange" min="1" max="10" value="3">
+        </div>
         <div class="screen"></div>
         <div class="controls">
             <button id="forward">Forward</button>
@@ -89,10 +96,15 @@
     </div>
 
     <script>
-        var buttons = document.querySelectorAll('button');
+var buttons = document.querySelectorAll('button');
         var statusElement = document.getElementById('status');
         var rosEndpointInput = document.getElementById('rosEndpointInput');
-        var defaultDuration = 3; // Default duration for all actions
+        var durationRange = document.getElementById('durationRange');
+        var durationValue = document.getElementById('durationValue');
+
+        durationRange.oninput = function() {
+            durationValue.textContent = this.value;
+        }
 
         function setButtonsDisabled(disabled) {
             buttons.forEach(function(button) {
@@ -103,10 +115,13 @@
         function sendCommand(action) {
             var apiEndpoint = "http://167.88.168.20:5000/move_robot";
             var rosEndpoint = rosEndpointInput.value.trim();
+            var duration = durationRange.value;
+            
             if (!rosEndpoint) {
                 alert('Please enter the ROS endpoint URL.');
                 return;
             }
+
             setButtonsDisabled(true);
             statusElement.innerText = 'Executing: ' + action;
 
@@ -135,7 +150,7 @@
             xhr.send(JSON.stringify({
                 command: {
                     action: action,
-                    duration: defaultDuration
+                    duration: parseInt(duration)
                 },
                 ros_endpoint: rosEndpoint
             }));
