@@ -74,7 +74,7 @@
 <body>
     <div class="container">
         <h1>Robot Control Panel</h1>
-        <input type="text" id="rosEndpoint" placeholder="Enter ROS Endpoint URL">
+        <input type="text" id="rosEndpointInput" placeholder="Enter ROS Endpoint URL">
         <div class="screen"></div>
         <div class="controls">
             <button id="forward">Forward</button>
@@ -91,7 +91,7 @@
     <script>
         var buttons = document.querySelectorAll('button');
         var statusElement = document.getElementById('status');
-        var rosEndpointInput = document.getElementById('rosEndpoint');
+        var rosEndpointInput = document.getElementById('rosEndpointInput');
 
         function setButtonsDisabled(disabled) {
             buttons.forEach(function(button) {
@@ -100,6 +100,8 @@
         }
 
         function sendCommand(action) {
+            var apiEndpoint = "http://167.88.168.20:5000/move_robot";
+            console.log(rosEndpointInput)
             var rosEndpoint = rosEndpointInput.value.trim();
             if (!rosEndpoint) {
                 alert('Please enter the ROS endpoint URL.');
@@ -109,9 +111,9 @@
             statusElement.innerText = 'Executing: ' + action;
 
             var xhr = new XMLHttpRequest();
-            xhr.open("POST", rosEndpoint, true);
+            xhr.open("POST", apiEndpoint, true);
             xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.timeout = 2000; // Set a timeout for the request
+            xhr.timeout = 2000;
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
@@ -130,7 +132,13 @@
                 statusElement.innerText = 'Error: Network error';
                 setButtonsDisabled(false);
             };
-            xhr.send(JSON.stringify({ action: action, duration: 3 }));
+            xhr.send(JSON.stringify({
+                command: {
+                    action: action,
+                    duration: 3
+                },
+                ros_endpoint: rosEndpoint
+            }));
         }
 
         document.getElementById('forward').addEventListener('click', function() { sendCommand('forward'); });
