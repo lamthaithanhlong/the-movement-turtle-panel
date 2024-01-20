@@ -92,6 +92,7 @@
         var buttons = document.querySelectorAll('button');
         var statusElement = document.getElementById('status');
         var rosEndpointInput = document.getElementById('rosEndpointInput');
+        var defaultDuration = 3; // Default duration for all actions
 
         function setButtonsDisabled(disabled) {
             buttons.forEach(function(button) {
@@ -101,7 +102,6 @@
 
         function sendCommand(action) {
             var apiEndpoint = "http://167.88.168.20:5000/move_robot";
-            console.log(rosEndpointInput)
             var rosEndpoint = rosEndpointInput.value.trim();
             if (!rosEndpoint) {
                 alert('Please enter the ROS endpoint URL.');
@@ -135,7 +135,7 @@
             xhr.send(JSON.stringify({
                 command: {
                     action: action,
-                    duration: 3
+                    duration: defaultDuration
                 },
                 ros_endpoint: rosEndpoint
             }));
