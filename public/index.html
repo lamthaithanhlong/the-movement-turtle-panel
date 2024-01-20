@@ -62,11 +62,19 @@
             margin-top: 20px;
             color: #666;
         }
+        input[type="text"] {
+            width: calc(100% - 40px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Robot Control Panel</h1>
     <div class="container">
+        <h1>Robot Control Panel</h1>
+        <input type="text" id="rosEndpoint" placeholder="Enter ROS Endpoint URL">
         <div class="screen"></div>
         <div class="controls">
             <button id="forward">Forward</button>
@@ -83,6 +91,8 @@
     <script>
         var buttons = document.querySelectorAll('button');
         var statusElement = document.getElementById('status');
+        var rosEndpointInput = document.getElementById('rosEndpoint');
+
         function setButtonsDisabled(disabled) {
             buttons.forEach(function(button) {
                 button.disabled = disabled;
@@ -90,13 +100,18 @@
         }
 
         function sendCommand(action) {
+            var rosEndpoint = rosEndpointInput.value.trim();
+            if (!rosEndpoint) {
+                alert('Please enter the ROS endpoint URL.');
+                return;
+            }
             setButtonsDisabled(true);
             statusElement.innerText = 'Executing: ' + action;
 
             var xhr = new XMLHttpRequest();
-            xhr.open("POST", "http://167.88.168.20:5000/move_robot", true);
+            xhr.open("POST", rosEndpoint, true);
             xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.timeout = 2000;
+            xhr.timeout = 2000; // Set a timeout for the request
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
@@ -124,7 +139,7 @@
         document.getElementById('right').addEventListener('click', function() { sendCommand('right'); });
         document.getElementById('stop').addEventListener('click', function() { sendCommand('stop'); });
 
-       // Keyboard event listener
+        // Keyboard event listener
         document.addEventListener('keydown', function(event) {
             switch (event.key) {
                 case 'ArrowUp':
